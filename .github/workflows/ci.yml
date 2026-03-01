@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet restore src/backend/KiboCsr.sln
+      - run: dotnet build src/backend/KiboCsr.sln -c Release --no-restore
+      - run: dotnet test src/backend/KiboCsr.sln -c Release --no-build --verbosity normal
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: cd src/frontend && npm install
+      - run: cd src/frontend && npm run build
+      - run: cd src/frontend && npm test

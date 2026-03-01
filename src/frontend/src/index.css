@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Kibo loading icon animation - draws from yellow to gray */
+@layer utilities {
+  .kibo-loading-icon {
+    animation: kibo-pulse 1.5s ease-in-out infinite;
+  }
+
+  .kibo-yellow-path {
+    animation: kibo-draw-yellow 1.2s ease-out infinite;
+    transform-origin: left top;
+  }
+
+  .kibo-yellow-path-dark {
+    fill: #FFC107;
+  }
+
+  .kibo-gray-path {
+    animation: kibo-draw-gray 1.2s ease-out 0.2s infinite both;
+    transform-origin: center;
+  }
+
+  .kibo-gray-path-dark {
+    fill: #9E9E9E;
+  }
+
+  .kibo-dark-path {
+    animation: kibo-draw-dark 1.2s ease-out 0.4s infinite both;
+    transform-origin: right bottom;
+  }
+
+  .kibo-dark-path-dark {
+    fill: #757575;
+  }
+}
+
+@keyframes kibo-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes kibo-draw-yellow {
+  0% {
+    opacity: 0.3;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes kibo-draw-gray {
+  0% {
+    opacity: 0.2;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes kibo-draw-dark {
+  0% {
+    opacity: 0.2;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Prevent whole-page scroll - only chat messages should scroll */
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Smooth theme transition */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Hidden scrollbar - scroll via mouse wheel, touch gesture, or trackpad */
+.chat-messages-scroll {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+.chat-messages-scroll::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* Mobile-friendly tap targets */
+@media (pointer: coarse) {
+  button, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

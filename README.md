@@ -82,10 +82,10 @@ See [SETUP.md](./SETUP.md) for detailed environment setup and run instructions.
 
 ```bash
 # Backend tests
-dotnet test
+cd src/backend && dotnet test
 
 # Frontend tests
-npm test
+cd src/frontend && npm test
 ```
 
 ---
