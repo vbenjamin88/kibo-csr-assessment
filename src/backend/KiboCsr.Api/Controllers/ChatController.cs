@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using KiboCsr.Api.Services;
-using System.Runtime.CompilerServices;
 
 namespace KiboCsr.Api.Controllers;
 
@@ -26,7 +25,10 @@ public class ChatController : ControllerBase
         Response.Headers.CacheControl = "no-cache";
         await Response.StartAsync(ct);
 
-        await foreach (var chunk in _agent.ProcessAsync(req.Message, ct))
+        var history = req.History?
+            .Select(h => new ChatTurn(h.Role, h.Content ?? ""))
+            .ToList();
+        await foreach (var chunk in _agent.ProcessAsync(req.Message, history, ct))
         {
             await Response.WriteAsync($"data: {System.Text.Json.JsonSerializer.Serialize(chunk)}\n\n", ct);
             await Response.Body.FlushAsync(ct);
@@ -34,4 +36,5 @@ public class ChatController : ControllerBase
     }
 }
 
-public record ChatRequest(string Message);
+public record ChatRequest(string Message, ChatHistoryItem[]? History = null);
+public record ChatHistoryItem(string Role, string? Content);

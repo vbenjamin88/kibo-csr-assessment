@@ -8,13 +8,21 @@ function getUserFriendlyError(e: unknown): string {
   return 'Something went wrong. Please try again.';
 }
 
-export async function* streamChat(message: string): AsyncGenerator<string, void, unknown> {
+export interface ChatHistoryItem {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+export async function* streamChat(
+  message: string,
+  history?: ChatHistoryItem[]
+): AsyncGenerator<string, void, unknown> {
   let res: Response;
   try {
     res = await fetch(`${API_BASE}/chat/message`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, history: history || [] }),
     });
   } catch (e) {
     throw new Error(getUserFriendlyError(e));

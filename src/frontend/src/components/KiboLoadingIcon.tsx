@@ -1,6 +1,8 @@
 /**
  * Kibo loading icon: Kibo logo in center with yellow spinning circle around it.
  */
+import { useTheme } from '../hooks/useTheme';
+
 export const KiboLoadingIcon = ({
   className = '',
   size = 48,
@@ -8,11 +10,16 @@ export const KiboLoadingIcon = ({
   className?: string;
   size?: number;
 }) => {
+  const { theme } = useTheme();
   const kiboYellow = '#FDD017';
+  const logoSize = Math.round(size * 0.65);
+  const logoOffset = (size - logoSize) / 2;
+  const logoSrc = theme === 'dark' ? '/favicon-dark.svg' : '/favicon-light.svg';
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 48 48"
+      viewBox={`0 0 ${size} ${size}`}
       width={size}
       height={size}
       className={`kibo-loading-icon ${className}`}
@@ -20,22 +27,25 @@ export const KiboLoadingIcon = ({
     >
       {/* Spinning yellow circle */}
       <circle
-        cx="24"
-        cy="24"
-        r="20"
+        cx={size / 2}
+        cy={size / 2}
+        r={size / 2 - 4}
         fill="none"
         stroke={kiboYellow}
         strokeWidth="3"
         strokeLinecap="round"
-        strokeDasharray="80 46"
+        strokeDasharray={`${Math.round(size * 1.67)} ${Math.round(size * 0.96)}`}
         className="kibo-loading-circle"
       />
-      {/* Kibo icon centered - scaled to ~50% */}
-      <g transform="translate(24, 24) scale(0.5) translate(-24, -24)">
-        <path fill={kiboYellow} d="M8 8h20v12L18 32H8V8z" />
-        <path fill="#363636" d="M28 20L18 32h10l10-12H28z" className="dark:fill-[#9E9E9E]" />
-        <path fill="#666666" d="M28 32 L40 32 L40 44 Z" className="dark:fill-white" />
-      </g>
+      {/* Kibo logo centered - uses same icon as header/favicon */}
+      <image
+        href={logoSrc}
+        x={logoOffset}
+        y={logoOffset}
+        width={logoSize}
+        height={logoSize}
+        preserveAspectRatio="xMidYMid meet"
+      />
     </svg>
   );
 };

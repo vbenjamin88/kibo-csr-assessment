@@ -59,9 +59,10 @@ export const Chat: React.FC = () => {
     ]);
     scrollToBottom();
 
+    const history = messages.map((m) => ({ role: m.role, content: m.content }));
     let content = '';
     try {
-      for await (const chunk of streamChat(text)) {
+      for await (const chunk of streamChat(text, history)) {
         content += chunk;
         setMessages((prev) =>
           prev.map((m) =>
