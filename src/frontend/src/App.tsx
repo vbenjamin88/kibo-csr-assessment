@@ -8,7 +8,7 @@ function App() {
     <div className="h-full flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-900 transition-colors">
       <header className="sticky top-0 z-20 flex-shrink-0 flex items-center justify-between px-4 sm:px-6 py-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="flex items-center gap-3">
-          <img src="/favicon.svg" alt="Kibo" className="w-10 h-10" />
+          <img src={theme === 'dark' ? '/favicon-dark.svg' : '/favicon-light.svg'} alt="Kibo" className="w-10 h-10" />
           <div>
             <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
               Kibo CSR Assistant

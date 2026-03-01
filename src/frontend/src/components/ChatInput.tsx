@@ -28,11 +28,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
 
   const placeholder = isSmallScreen ? 'Type or speak...' : 'Type or speak your request...';
   const voiceHint = isSmallScreen ? 'Voice: Chrome/Edge' : 'Voice input available in Chrome and Edge.';
-  const listeningHint = isSmallScreen ? 'Click mic to stop & send' : 'Listening... Click mic again to stop and send.';
+  const listeningHint = isSmallScreen ? 'Click mic to stop' : 'Listening... Click mic to stop, then send.';
 
   const handleVoiceResult = (text: string) => {
     setInput(text);
-    if (text.trim()) onSend(text.trim());
   };
 
   const { transcript, listening, startListening, stopListening, supported } =

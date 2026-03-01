@@ -2,93 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Kibo loading icon animation - draws from yellow to gray */
+/* Kibo loading icon - yellow circle spins around centered Kibo logo */
 @layer utilities {
   .kibo-loading-icon {
-    animation: kibo-pulse 1.5s ease-in-out infinite;
+    display: block;
   }
 
-  .kibo-yellow-path {
-    animation: kibo-draw-yellow 1.2s ease-out infinite;
-    transform-origin: left top;
-  }
-
-  .kibo-yellow-path-dark {
-    fill: #FFC107;
-  }
-
-  .kibo-gray-path {
-    animation: kibo-draw-gray 1.2s ease-out 0.2s infinite both;
+  .kibo-loading-circle {
     transform-origin: center;
-  }
-
-  .kibo-gray-path-dark {
-    fill: #9E9E9E;
-  }
-
-  .kibo-dark-path {
-    animation: kibo-draw-dark 1.2s ease-out 0.4s infinite both;
-    transform-origin: right bottom;
-  }
-
-  .kibo-dark-path-dark {
-    fill: #757575;
+    animation: kibo-spin 1s linear infinite;
   }
 }
 
-@keyframes kibo-pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
+@keyframes kibo-spin {
+  from {
+    transform: rotate(0deg);
   }
-  50% {
-    opacity: 0.85;
-    transform: scale(1.05);
-  }
-}
-
-@keyframes kibo-draw-yellow {
-  0% {
-    opacity: 0.3;
-    transform: scale(0.95);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes kibo-draw-gray {
-  0% {
-    opacity: 0.2;
-    transform: scale(0.9);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes kibo-draw-dark {
-  0% {
-    opacity: 0.2;
-    transform: scale(0.9);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
+  to {
+    transform: rotate(360deg);
   }
 }
 

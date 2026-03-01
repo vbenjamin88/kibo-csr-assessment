@@ -1,15 +1,14 @@
-import React from 'react';
-
-interface KiboLoadingIconProps {
+/**
+ * Kibo loading icon: Kibo logo in center with yellow spinning circle around it.
+ */
+export const KiboLoadingIcon = ({
+  className = '',
+  size = 48,
+}: {
   className?: string;
   size?: number;
-}
-
-/**
- * Kibo logo loading icon with animation that draws from yellow section to gray section.
- * Light mode: yellow + dark gray. Dark mode: adjusted for visibility.
- */
-export const KiboLoadingIcon: React.FC<KiboLoadingIconProps> = ({ className = '', size = 48 }) => {
+}) => {
+  const kiboYellow = '#FDD017';
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -19,34 +18,24 @@ export const KiboLoadingIcon: React.FC<KiboLoadingIconProps> = ({ className = ''
       className={`kibo-loading-icon ${className}`}
       aria-hidden="true"
     >
-      <defs>
-        <linearGradient id="kibo-yellow-fill" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#FFC107" className="kibo-yellow-stop" />
-          <stop offset="100%" stopColor="#FFC107" className="kibo-yellow-stop" />
-        </linearGradient>
-        <linearGradient id="kibo-gray-fill" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#6B6B6B" className="kibo-mid-gray-stop" />
-          <stop offset="100%" stopColor="#4A4A4A" className="kibo-dark-gray-stop" />
-        </linearGradient>
-      </defs>
-      {/* Yellow section - upper left (animates first) */}
-      <path
-        fill="url(#kibo-yellow-fill)"
-        className="kibo-yellow-path dark:kibo-yellow-path-dark"
-        d="M8 8h20v12L18 32H8V8z"
+      {/* Spinning yellow circle */}
+      <circle
+        cx="24"
+        cy="24"
+        r="20"
+        fill="none"
+        stroke={kiboYellow}
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeDasharray="80 46"
+        className="kibo-loading-circle"
       />
-      {/* Mid gray section */}
-      <path
-        fill="url(#kibo-gray-fill)"
-        className="kibo-gray-path dark:kibo-gray-path-dark"
-        d="M28 20L18 32h10l10-12H28z"
-      />
-      {/* Dark gray section */}
-      <path
-        fill="#4A4A4A"
-        className="kibo-dark-path dark:kibo-dark-path-dark"
-        d="M28 20h12v12H28V20z"
-      />
+      {/* Kibo icon centered - scaled to ~50% */}
+      <g transform="translate(24, 24) scale(0.5) translate(-24, -24)">
+        <path fill={kiboYellow} d="M8 8h20v12L18 32H8V8z" />
+        <path fill="#363636" d="M28 20L18 32h10l10-12H28z" className="dark:fill-[#9E9E9E]" />
+        <path fill="#666666" d="M28 32 L40 32 L40 44 Z" className="dark:fill-white" />
+      </g>
     </svg>
   );
 };

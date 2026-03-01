@@ -61,11 +61,13 @@ CSRs are often on the phone with customers and need to retrieve data or perform 
 ### Quick Start (Docker)
 
 ```bash
-# Set your OpenAI API key
-export LLM_API_KEY=sk-your-openai-api-key   # Linux/Mac
-# Or: set LLM_API_KEY=sk-your-openai-api-key   # Windows CMD
+# 1. Copy .env.example to .env and add your OpenAI API key
+cp .env.example .env    # Linux/Mac
+# copy .env.example .env   # Windows CMD
 
-# Run the entire stack
+# 2. Edit .env: replace sk-your-openai-api-key with your key from https://platform.openai.com/api-keys
+
+# 3. Run the entire stack
 docker-compose up --build
 ```
 

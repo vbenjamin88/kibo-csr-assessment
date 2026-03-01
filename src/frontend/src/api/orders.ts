@@ -1,6 +1,5 @@
 import type { Order } from '../types/order';
-
-const API_BASE = '/api';
+import { API_BASE } from './config';
 
 export async function getOrder(orderId: string): Promise<Order | null> {
   const id = orderId.replace(/^#/, '').trim();

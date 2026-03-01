@@ -48,27 +48,26 @@ git clone https://github.com/vbenjamin88/kibo-csr-assessment.git
 cd kibo-csr-assessment
 ```
 
-### 2. Set Environment Variable
+### 2. Set API Key
 
-**Windows (PowerShell):**
-```powershell
-$env:LLM_API_KEY = "sk-your-openai-api-key"
-```
+**Recommended – use `.env` file:**
 
-**Windows (Command Prompt):**
-```cmd
-set LLM_API_KEY=sk-your-openai-api-key
-```
+1. Copy the sample file and add your OpenAI API key:
+   ```bash
+   # Linux / Mac
+   cp .env.example .env
 
-**Linux / Mac:**
-```bash
-export LLM_API_KEY=sk-your-openai-api-key
-```
+   # Windows (Command Prompt)
+   copy .env.example .env
+   ```
+2. Edit `.env` and replace `sk-your-openai-api-key` with your real key from [OpenAI Platform](https://platform.openai.com/api-keys).
+3. `.env` is gitignored; your key will not be committed.
 
-**Or create `.env` file** in the project root:
-```
-LLM_API_KEY=sk-your-openai-api-key
-```
+**Alternative – set environment variable before running:**
+
+- **Windows (PowerShell):** `$env:LLM_API_KEY = "sk-your-key"`
+- **Windows (Command Prompt):** `set LLM_API_KEY=sk-your-key`
+- **Linux / Mac:** `export LLM_API_KEY=sk-your-key`
 
 ### 3. Run Everything
 
@@ -87,6 +86,8 @@ docker-compose up --build
 ## Option B: Run Locally (Development)
 
 ### Backend
+
+Ensure `LLM_API_KEY` is set in your shell (from `.env` or manually), then:
 
 ```bash
 cd src/backend

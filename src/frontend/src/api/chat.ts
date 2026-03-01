@@ -1,4 +1,4 @@
-const API_BASE = '/api';
+import { API_BASE } from './config';
 
 function getUserFriendlyError(e: unknown): string {
   if (e instanceof TypeError && e.message === 'Failed to fetch') {
