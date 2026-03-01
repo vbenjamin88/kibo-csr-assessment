@@ -42,13 +42,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
 
   const displayValue = supported && listening ? transcript || input : input;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const doSubmit = () => {
     const text = (supported && listening ? transcript || input : input).trim();
     if (!text || disabled) return;
     onSend(text);
     setInput('');
   };
+
 
   const handleMicClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -58,7 +58,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2 p-3 sm:p-4 flex-shrink-0">
+    <form onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-2 p-3 sm:p-4 flex-shrink-0">
       <div className="flex gap-2 items-center">
         <div className="flex-1 relative flex items-center min-h-[48px]">
           <textarea
@@ -68,7 +68,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                handleSubmit(e);
+                doSubmit();
               }
             }}
             placeholder={placeholder}
@@ -99,7 +99,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
           )}
         </div>
         <button
-          type="submit"
+          type="button"
+          onClick={doSubmit}
           disabled={disabled || !(displayValue || '').trim()}
           className="flex-shrink-0 h-[48px] w-[48px] rounded-xl bg-kibo-yellow hover:bg-kibo-yellow-dark dark:bg-kibo-yellow dark:hover:bg-amber-500 text-slate-900 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           aria-label="Send message"
