@@ -11,6 +11,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
   const [input, setInput] = useState('');
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const wasDisabled = useRef(false);
+  const lastMicStopRef = useRef(0);
   const isSmallScreen = useMediaQuery('(max-width: 640px)');
 
   // Auto-focus on initial page load
@@ -43,18 +44,24 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
   const displayValue = supported && listening ? transcript || input : input;
 
   const doSubmit = () => {
+    // Block submit for 400ms after mic stop (prevents accidental post from overlapping touch/click)
+    if (Date.now() - lastMicStopRef.current < 400) return;
     const text = (supported && listening ? transcript || input : input).trim();
     if (!text || disabled) return;
     onSend(text);
     setInput('');
   };
 
-
   const handleMicClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (listening) stopListening();
-    else startListening();
+    (e.nativeEvent as Event).stopImmediatePropagation();
+    if (listening) {
+      lastMicStopRef.current = Date.now();
+      stopListening();
+    } else {
+      startListening();
+    }
   };
 
   return (
@@ -81,7 +88,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
             <button
               type="button"
               onClick={handleMicClick}
-              className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors flex items-center justify-center ${
+              className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors flex items-center justify-center z-20 ${
                 listening
                   ? 'bg-red-500 text-white animate-pulse'
                   : 'text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'
