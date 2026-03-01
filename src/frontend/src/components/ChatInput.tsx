@@ -30,12 +30,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
   const voiceHint = isSmallScreen ? 'Voice: Chrome/Edge' : 'Voice input available in Chrome and Edge.';
   const listeningHint = isSmallScreen ? 'Click mic to stop' : 'Listening... Click mic to stop, then send.';
 
-  const handleVoiceResult = (text: string) => {
-    setInput(text);
-  };
-
   const { transcript, listening, startListening, stopListening, supported } =
-    useVoiceInput(handleVoiceResult);
+    useVoiceInput();
+
+  // When mic stops, copy transcript to input only (no send - user must click Send)
+  useEffect(() => {
+    if (!listening && transcript.trim()) {
+      setInput(transcript.trim());
+    }
+  }, [listening, transcript]);
 
   const displayValue = supported && listening ? transcript || input : input;
 
@@ -47,7 +50,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled }) => {
     setInput('');
   };
 
-  const handleMicClick = () => {
+  const handleMicClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (listening) stopListening();
     else startListening();
   };

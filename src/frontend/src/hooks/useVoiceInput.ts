@@ -19,7 +19,7 @@ interface SpeechRecognitionLike {
 
 let activeRecognition: SpeechRecognitionLike | null = null;
 
-export function useVoiceInput(onResult?: (text: string) => void) {
+export function useVoiceInput() {
   const [transcript, setTranscript] = useState('');
   const [listening, setListening] = useState(false);
   const transcriptRef = useRef('');
@@ -47,8 +47,6 @@ export function useVoiceInput(onResult?: (text: string) => void) {
     rec.onend = () => {
       setListening(false);
       activeRecognition = null;
-      const t = transcriptRef.current.trim();
-      if (t && onResult) onResult(t);
     };
     rec.onerror = () => {
       setListening(false);
@@ -57,7 +55,7 @@ export function useVoiceInput(onResult?: (text: string) => void) {
     activeRecognition = rec;
     rec.start();
     setListening(true);
-  }, [Recognition, onResult]);
+  }, [Recognition]);
 
   const stopListening = useCallback(() => {
     if (activeRecognition) {
@@ -65,7 +63,6 @@ export function useVoiceInput(onResult?: (text: string) => void) {
       activeRecognition = null;
     }
     setListening(false);
-    // onResult is called from onend when recognition stops
   }, []);
 
   return { transcript, listening, startListening, stopListening, supported };
