@@ -1,38 +1,54 @@
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using KiboCsr.Api.Models;
 
 namespace KiboCsr.Api.Services;
 
 public class AgentService : IAgentService
 {
+    private static readonly Regex OrderRefRegex = new(@"\[ORDER:(\d+)\]", RegexOptions.Compiled);
+    private static readonly Regex HasExplicitOrderNumber = new(@"\d+", RegexOptions.Compiled);
     private readonly IOrderService _orderService;
     private readonly HttpClient _http;
     private readonly string _apiKey;
     private readonly JsonSerializerOptions _jsonOpts = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     private const string SystemPrompt = @"You are a helpful Kibo Customer Service Representative assistant. You help CSRs retrieve order details and cancel orders.
+
+ORDER RESOLUTION - Two cases only:
+1) User provides specific order number (e.g. 'cancel 102', 'status of 101') → Use that number if it exists.
+2) User does NOT provide a number (e.g. 'cancel it', 'cancel that', 'yes') → Use the LATEST order from previous chat. The system will inject which order that is when applicable.
+
+CRITICAL - STATUS/DETAILS vs CANCELLATION:
+- User says ""status"", ""details"", ""look up"", ""show"", ""order status of X"" → LOOKUP ONLY. Call GetOrder and display with [ORDER:id]. NEVER call CancelOrder. NEVER say ""cannot be cancelled"".
+- User says ""cancel"", ""cancel it"", ""cancel X"" → Cancellation flow. Call GetOrder first, then CancelOrder if Pending.
+When the system injects 'RESOLVED_ORDER: X', you MUST use orderId X. Call GetOrder immediately - do NOT ask the user for the order number.
+
 You have access to these tools:
-- GetOrder(orderId): Returns order details. Use when the user asks to look up, pull up, fetch, or view an order.
-- CancelOrder(orderId): Cancels a Pending order. Only Pending orders can be cancelled.
+- GetOrder(orderId): Returns order details. Use when the user asks to look up an order, OR when processing 'cancel it' - use the resolved orderId.
+- CancelOrder(orderId): Cancels a Pending order.
 
-CORRECTION RULE: When the user corrects or clarifies an order number (e.g. 'Sorry, 102', 'I meant 102', '102') after a failed request (e.g. 'order not found'), continue the SAME intent they had. If they asked for STATUS and got 'not found', then said 'Sorry, 102' - they want STATUS of 102. Call GetOrder(102) and show the order. Do NOT assume they want to cancel.
+When user provides a number: Use it directly. When user does not (e.g. 'cancel it', 'yes'): Use RESOLVED_ORDER if provided.
 
-ORDER DISPLAY - no duplicates: When showing order details, use ONLY a short intro line plus [ORDER:id]. The UI renders a full card. Do NOT list Status, Total, Items, or Customer Name - that duplicates the card. Example: 'Here are the details for Order #101. [ORDER:101]'
+ORDER DISPLAY: When showing order for lookup, respond ONLY: 'Here are the details for Order #X. [ORDER:X]' - no extra text. [ORDER:id] renders the card.
 
-CANCELLATION - never ask for order number: When user says 'cancel it', 'cancel that', or 'cancel 102', you MUST know the order from context. If they said 'it'/'that', use the MOST RECENT order displayed or asked about. Just proceed.
+Cancellation: Call GetOrder first. If Pending, ask for confirmation. If Shipped/Cancelled, say 'Order #X cannot be cancelled because it is already [status].' Never substitute a different order.
 
-Order context - IMMEDIATELY PRECEDING exchange matters: The order from the user's last question or your last display is the current one. User asked 'order status of 101', you showed Order #101. User says 'cancel it'. 'it' = 101. NOT 102 from earlier. Always use the order from the most recent exchange, never an older one.
+Keep responses concise.";
 
-Cancellation flow:
-1. User wants to cancel → determine order from most recent in conversation. Call GetOrder. If Pending: ask 'Are you sure you want to cancel Order #<id>? (Yes/No)'. If Shipped/Cancelled: respond 'Order #<id> cannot be cancelled because it is already [status].'
-2. User replies Yes/yes → IMMEDIATELY call CancelOrder.
-3. User replies with a number in cancellation context → that IS the order ID. Proceed. Do NOT re-display order details.
-
-NEVER during cancellation: ask for order number, include [ORDER:id], or re-display order details.
-
-Keep responses concise and professional.";
+    private static string? GetLastOrderIdFromHistory(IReadOnlyList<ChatTurn> history)
+    {
+        string? last = null;
+        foreach (var turn in history)
+        {
+            if (turn.Role != "assistant") continue;
+            foreach (Match m in OrderRefRegex.Matches(turn.Content))
+                last = m.Groups[1].Value;
+        }
+        return last;
+    }
 
     public AgentService(IOrderService orderService, IHttpClientFactory httpFactory, IConfiguration config)
     {
@@ -49,7 +65,32 @@ Keep responses concise and professional.";
             yield break;
         }
 
-        var messages = new List<object> { new { role = "system", content = SystemPrompt } };
+        var systemContent = SystemPrompt;
+        string? resolvedOrderId = null;
+        var forceGetOrder = false;
+
+        // When user doesn't specify order number, resolve from last [ORDER:id] in history
+        if (history != null && history.Count > 0 && !HasExplicitOrderNumber.IsMatch(userMessage))
+        {
+            var lastOrderId = GetLastOrderIdFromHistory(history);
+            var normalized = userMessage.Replace("canel", "cancel", StringComparison.OrdinalIgnoreCase)
+                .Replace("cancle", "cancel", StringComparison.OrdinalIgnoreCase);
+            var impliesCancel = normalized.Contains("cancel", StringComparison.OrdinalIgnoreCase)
+                || Regex.IsMatch(userMessage.Trim(), @"^(yes|yeah|ok|okay|go\s+ahead|do\s+it)\s*[.!]?$", RegexOptions.IgnoreCase);
+            var impliesLookup = userMessage.Contains("detail", StringComparison.OrdinalIgnoreCase)
+                || userMessage.Contains("status", StringComparison.OrdinalIgnoreCase)
+                || userMessage.Contains("show", StringComparison.OrdinalIgnoreCase)
+                || userMessage.Contains("look up", StringComparison.OrdinalIgnoreCase)
+                || userMessage.Contains("provide", StringComparison.OrdinalIgnoreCase);
+            if (lastOrderId != null && (impliesCancel || impliesLookup))
+            {
+                resolvedOrderId = lastOrderId;
+                forceGetOrder = impliesCancel;
+                systemContent += $"\n\nRESOLVED_ORDER: {lastOrderId} — The user did not specify an order. Use orderId \"{lastOrderId}\" for GetOrder. {(impliesCancel ? "Call GetOrder immediately - do NOT ask for the order number." : "Display the order with [ORDER:id].")}";
+            }
+        }
+
+        var messages = new List<object> { new { role = "system", content = systemContent } };
         if (history != null && history.Count > 0)
         {
             foreach (var turn in history.TakeLast(20))
@@ -62,13 +103,15 @@ Keep responses concise and professional.";
 
         var tools = new[]
         {
-            new { type = "function", function = new { name = "GetOrder", description = "Returns order details", parameters = new { type = "object", properties = new { orderId = new { type = "string" } }, required = new[] { "orderId" } } } },
-            new { type = "function", function = new { name = "CancelOrder", description = "Cancels a Pending order", parameters = new { type = "object", properties = new { orderId = new { type = "string" } }, required = new[] { "orderId" } } } }
+            new { type = "function", function = new { name = "GetOrder", description = "Returns order details. When user says 'cancel it', use the order ID from the most recent order you displayed in the conversation.", parameters = new { type = "object", properties = new { orderId = new { type = "string", description = "Order ID (e.g. 101, 102). Use the order from your last display when user said 'cancel it'." } }, required = new[] { "orderId" } } } },
+            new { type = "function", function = new { name = "CancelOrder", description = "Cancels a Pending order. Use order ID from conversation context when user said 'cancel it'.", parameters = new { type = "object", properties = new { orderId = new { type = "string", description = "Order ID to cancel" } }, required = new[] { "orderId" } } } }
         };
+
+        var toolChoice = forceGetOrder ? (object)new { type = "function", function = new { name = "GetOrder" } } : "auto";
 
         while (true)
         {
-            var body = new { model = "gpt-4o-mini", messages, tools, tool_choice = "auto" };
+            var body = new { model = "gpt-4o-mini", messages, tools, tool_choice = toolChoice };
             using var req = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions");
             req.Headers.Add("Authorization", "Bearer " + _apiKey);
             req.Content = JsonContent.Create(body);
@@ -89,7 +132,7 @@ Keep responses concise and professional.";
                     var fn = tc.GetProperty("function");
                     var name = fn.GetProperty("name").GetString() ?? "";
                     var args = JsonDocument.Parse(fn.GetProperty("arguments").GetString() ?? "{}");
-                    var orderId = args.RootElement.GetProperty("orderId").GetString() ?? "";
+                    var orderId = resolvedOrderId ?? args.RootElement.GetProperty("orderId").GetString() ?? "";
 
                     string toolResult;
                     if (name == "GetOrder")
@@ -108,6 +151,7 @@ Keep responses concise and professional.";
                     messages.Add(new { role = "assistant", content = (string?)null, tool_calls = new[] { new { id = tc.GetProperty("id").GetString(), type = "function", function = new { name, arguments = fn.GetProperty("arguments").GetString() } } } });
                     messages.Add(new { role = "tool", tool_call_id = tc.GetProperty("id").GetString(), content = toolResult });
                 }
+                toolChoice = "auto";
                 continue;
             }
 

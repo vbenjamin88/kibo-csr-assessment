@@ -92,7 +92,7 @@ export const Chat: React.FC = () => {
       setLoading(false);
       scrollToBottom();
     }
-  }, [scrollToBottom]);
+  }, [messages, scrollToBottom]);
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
