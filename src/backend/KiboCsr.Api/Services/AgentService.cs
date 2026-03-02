@@ -34,6 +34,8 @@ When user provides a number: Use it directly. When user does not (e.g. 'cancel i
 
 ORDER DISPLAY: When showing order for lookup, respond ONLY: 'Here are the details for Order #X. [ORDER:X]' - no extra text. [ORDER:id] renders the card.
 
+ORDER NOT FOUND: When GetOrder returns an error (order not found), respond with a clear message like 'Order #X was not found' or 'Unable to find order #X. Please check the order number and try again.' Do NOT include [ORDER:id] in your response - the order does not exist. Never show an empty order card.
+
 Cancellation: Call GetOrder first. If Pending, ask for confirmation. If Shipped/Cancelled, say 'Order #X cannot be cancelled because it is already [status].' Never substitute a different order.
 
 Keep responses concise.";

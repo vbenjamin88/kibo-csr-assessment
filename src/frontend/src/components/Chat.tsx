@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { KiboLoadingIcon } from './KiboLoadingIcon';
@@ -38,8 +38,19 @@ export const Chat: React.FC = () => {
   const scrollContainerRef = useDragToScroll<HTMLDivElement>();
 
   const scrollToBottom = useCallback(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, []);
+
+  // Auto-scroll to last message when messages change (e.g. after send)
+  useEffect(() => {
+    if (messages.length > 0) {
+      // Defer to ensure DOM has updated
+      const id = requestAnimationFrame(() => {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      });
+      return () => cancelAnimationFrame(id);
+    }
+  }, [messages.length]);
 
   const handleSend = useCallback(async (text: string) => {
     setError(null);
