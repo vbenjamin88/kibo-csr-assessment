@@ -1,7 +1,21 @@
+using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using KiboCsr.Api.Data;
 using KiboCsr.Api.Models;
 using KiboCsr.Api.Services;
+
+// Load .env from repo root (when running locally - Docker injects vars directly)
+var dirs = new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
+var rels = new[] { ".env", "..\\.env", "..\\..\\.env", "..\\..\\..\\.env", "..\\..\\..\\..\\.env", "..\\..\\..\\..\\..\\.env" };
+foreach (var baseDir in dirs)
+{
+    foreach (var rel in rels)
+    {
+        var path = Path.GetFullPath(Path.Combine(baseDir, rel));
+        if (File.Exists(path)) { Env.Load(path); goto loaded; }
+    }
+}
+loaded:
 
 var builder = WebApplication.CreateBuilder(args);
 
