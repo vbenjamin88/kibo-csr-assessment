@@ -1,22 +1,88 @@
+import React from 'react';
+import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Chat } from './components/Chat';
+import { ChatWidget } from './components/ChatWidget';
+import { HomePage } from './pages/HomePage';
+import { ChatPage } from './pages/ChatPage';
 import { useTheme } from './hooks/useTheme';
 
-function App() {
+const WIDGET_OPEN_KEY = 'kibo-csr-widget-open';
+
+function getStoredWidgetOpen(): boolean {
+  try {
+    return localStorage.getItem(WIDGET_OPEN_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function setStoredWidgetOpen(open: boolean) {
+  try {
+    localStorage.setItem(WIDGET_OPEN_KEY, String(open));
+  } catch {
+    /* ignore */
+  }
+}
+
+function AppContent() {
   const { theme, toggleTheme } = useTheme();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [widgetOpen, setWidgetOpen] = React.useState(getStoredWidgetOpen);
+
+  const handleWidgetOpenChange = (open: boolean) => {
+    setWidgetOpen(open);
+    setStoredWidgetOpen(open);
+  };
+
+  const handleOpenWidget = () => {
+    setWidgetOpen(true);
+    setStoredWidgetOpen(true);
+  };
+
+  const handleMaximize = () => {
+    setWidgetOpen(false);
+    setStoredWidgetOpen(false);
+    navigate('/chat');
+  };
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-900 transition-colors">
       <header className="sticky top-0 z-20 flex-shrink-0 flex items-center justify-between px-4 sm:px-6 py-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
-        <div className="flex items-center gap-3">
-          <img src={theme === 'dark' ? '/favicon-dark.svg' : '/favicon-light.svg'} alt="Kibo" className="w-10 h-10" />
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-              Kibo CSR Assistant
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Order lookup &amp; cancellation
-            </p>
-          </div>
+        <div className="flex items-center gap-6">
+          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <img src={theme === 'dark' ? '/favicon-dark.svg' : '/favicon-light.svg'} alt="Kibo" className="w-10 h-10" />
+            <div className="hidden sm:block">
+              <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                Kibo CSR Assistant
+              </h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Order lookup &amp; cancellation
+              </p>
+            </div>
+          </Link>
+          <nav className="flex items-center gap-1">
+            <Link
+              to="/"
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                location.pathname === '/'
+                  ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100'
+                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700'
+              }`}
+            >
+              Home
+            </Link>
+            <Link
+              to="/chat"
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                location.pathname === '/chat'
+                  ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100'
+                  : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700'
+              }`}
+            >
+              Chat
+            </Link>
+          </nav>
         </div>
         <button
           onClick={toggleTheme}
@@ -44,11 +110,35 @@ function App() {
       </header>
 
       <main className="flex-1 flex flex-col min-h-0 overflow-hidden w-full max-w-3xl mx-auto px-4 sm:px-6 py-4">
-        <div className="flex-1 flex flex-col min-h-0 min-w-0 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg overflow-hidden">
-          <Chat />
-        </div>
+        <Routes>
+          <Route path="/" element={
+            <div className="flex-1 flex flex-col min-h-0 min-w-0 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg overflow-hidden">
+              <HomePage onOpenWidget={handleOpenWidget} />
+            </div>
+          } />
+          <Route path="/chat" element={<ChatPage />} />
+        </Routes>
       </main>
+
+      {/* Floating chat widget - on Home and other pages (hidden on Chat page which has full chat) */}
+      {location.pathname !== '/chat' && (
+        <ChatWidget
+          open={widgetOpen}
+          onOpenChange={handleWidgetOpenChange}
+          onMaximize={handleMaximize}
+        >
+          <Chat />
+        </ChatWidget>
+      )}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 }
 
