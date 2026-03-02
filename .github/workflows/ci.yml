@@ -7,6 +7,18 @@ on:
     branches: [main, develop]
 
 jobs:
+  docker:
+    name: Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate docker-compose
+        run: docker compose config --quiet
+      - name: Build images
+        env:
+          LLM_API_KEY: sk-dummy-key-for-ci-build
+        run: docker compose build
+
   backend:
     runs-on: ubuntu-latest
     steps:
